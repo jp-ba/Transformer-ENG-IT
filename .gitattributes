@@ -1,0 +1,31 @@
+# ==========================
+# Line Ending Normalization
+# ==========================
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# ==========================
+# Source Code (force LF)
+# ==========================
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# ==========================
+# Git/Config Files (force LF)
+# ==========================
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# ==========================
+# Binary Files (no conversion)
+# ==========================
+*.pt binary
+*.pth binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
