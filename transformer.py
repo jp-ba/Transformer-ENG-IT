@@ -17,7 +17,7 @@ class PositionalEncoding(nn.Module):
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
 
-        pe = pe.unsqueeze(0) * (1, Seq_Len, d_model)
+        pe = pe.unsqueeze(0) * (1, seq_len, d_model)
 
         self.register_buffer('pe', pe)
 
@@ -47,5 +47,4 @@ class FeedForwardBlock(nn.Module):
         self.linear_2 = nn.Linear(d_ff, d_model)
 
     def forward(self, x):
-        ? (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_ff) --> (Batch, Seq_Len, d_model)
         return self.linear_2(self.dropout(torch.relu(self.linear_1(x))))
