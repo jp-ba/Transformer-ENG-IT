@@ -37,7 +37,13 @@ Each file is a cumulative lecture snapshot — later files repeat earlier blocks
 
 - **`CSCI_440-10-m+c_1.0.py`** — All above + **`DecoderBlock` + `Decoder` stack** (NEW — Block 07 source). `DecoderBlock` comment blocks between `class` line and methods are at 0 indent (outside class body). `?*` bug re-introduced in `attention` method. `InputEmbeddings` missing `:` after class definition.
 
+- **`CSCI_440-10-m+c_1.1.py`** — Minor revision of `-1.0`. Adds `#todo` comment block near the top (instructor notes on session goals). **No bugs fixed** — all bugs from `-1.0` are identical: `nn.module`/`nn.embedding` lowercase, `torch.arrange`, `math.log(10000,0)`, `dim * -1`, stray `?`, `?*` in `attention`, missing `@staticmethod`, missing `=`, `ResidualConnection`/`EncoderBlock`/`Encoder` nested at 8-space inside MHA, `DecoderBlock` comment blocks at 0 indent. Not a better source than `-1.0` for any block.
+
 - **`CSCI_440-11-m+c_1.3.py`** — All above + **`ProjectionLayer`** (NEW — Block 08 source). `ProjectionLayer` has no syntax bugs — clean implementation. `?*` bug persists. `InputEmbeddings` missing `:` (uses `nn.Module` correct case this time). **`class Transformer` (Block 09) is absent from all lecture files.**
+
+- **`CSCI_440-12-m+c_1.0.py`** — All blocks 01–09 present. **`class Transformer` (Block 09) appears here for the first time — clean, no syntax bugs.** Same bugs as `-11` for blocks 01–05 (`nn.module`/`nn.embedding` lowercase, `torch.arrange`, `math.log(10000,0)`, `?*` bug in `attention`, missing `@staticmethod`, missing `=` on attention assignment, `PositionalEncoding` indentation + `forward` at module level, `dim * -1`). `ResidualConnection`, `EncoderBlock`, and `Encoder` still nested inside `MultiHeadAttentionBlock` at 8-space indent. `DecoderBlock` comment blocks are at 0 indent (outside class body); `Decoder` is at module level — correct. `ProjectionLayer` is clean. `build_transformer` factory function is absent — only truncated description comments exist (file ends mid-comment at line 540).
+
+- **`CSCI_440-12-m+c_1.1.py`** — Minor revision of `-1.0`. Adds a `#I. Math` section at the top of the file with a `LogSoftmax` example and seaborn plotting code (requires `matplotlib` and `seaborn` imports not present in the `#II. Code` section). **No bugs fixed** — all bugs from `-1.0` are identical: `nn.module`/`nn.embedding` lowercase, `torch.arrange`, `math.log(10000,0)`, `dim * -1`, stray `?`, `?*` in `attention`, missing `@staticmethod`, missing `=`, `ResidualConnection`/`EncoderBlock`/`Encoder` nested at 8-space inside MHA, `DecoderBlock` comment blocks at 0 indent. `build_transformer` factory function still absent — file ends at the same mid-comment truncation point (line 571, `#hyperparam hidden layer (a feed fwd): d_ff =`). `class Transformer` remains clean. Not a better source than `-1.0` for any block.
 
 ### Best Source Per Block
 
@@ -48,10 +54,10 @@ Each file is a cumulative lecture snapshot — later files repeat earlier blocks
 | 03 | `LayerNormalization` | `-08` | All files identical |
 | 04 | `MultiHeadAttentionBlock` | **`-09`** | Only file with correct `@` operator |
 | 05 | `ResidualConnection` | `-09` | All files nest it inside MHA incorrectly |
-| 06 | `EncoderBlock` + `Encoder` | `-09` | Both nested inside MHA incorrectly |
-| 07 | `DecoderBlock` + `Decoder` | `-10` or `-11` | Comment blocks outside class body |
-| 08 | `ProjectionLayer` | **`-11`** | Cleanest block — no bugs |
-| 09 | `class Transformer` | **NONE** | Not in any lecture file — must write |
+| 06 | `EncoderBlock` + `Encoder` | `-09` | Both nested inside MHA incorrectly in all files |
+| 07 | `DecoderBlock` + `Decoder` | `-10`/`-11`/`-12` | Comment blocks outside class body; `-10-1.0` and `-10-1.1` are identical for this block |
+| 08 | `ProjectionLayer` | **`-11`** or **`-12`** | Clean — no bugs in either; `-12-1.0` and `-12-1.1` identical for this block |
+| 09 | `class Transformer` | **`-12`** | First and only appearance; no syntax bugs; `build_transformer` absent in both `-1.0` and `-1.1` |
 
 ### Syntax Issues in `CSCI_440-08-m+c_1.4.py` (source for model.py compilation)
 
@@ -100,10 +106,10 @@ Submit two files on Canvas:
 | 04 | `FeedForwardBlock` | IN PROGRESS | Present; stray `?` on line 173 unfixed |
 | 04 | `MultiHeadAttentionBlock` | IN PROGRESS | Present; `?*` bug + missing `@staticmethod` + missing `=` unfixed |
 | 05 | `ResidualConnection` | IN PROGRESS | Present but nested 8-space inside MHA — needs move to module level |
-| 06 | `EncoderBlock` + `Encoder` | TODO | Stub comment only; source is `-09` |
-| 07 | `DecoderBlock` + `Decoder` | TODO | Stub comment only; source is `-10`/`-11` |
-| 08 | `ProjectionLayer` | TODO | Stub comment only; source is `-11` (clean) |
-| 09 | `class Transformer` | TODO | Not in any lecture file — must be written |
+| 06 | `EncoderBlock` + `Encoder` | IN PROGRESS | Present (copied from `-09`); still nested 8-space inside MHA — needs move to module level |
+| 07 | `DecoderBlock` + `Decoder` | IN PROGRESS | Present (copied from `-10`); `DecoderBlock` comment blocks at 0 indent (outside class body) — needs fix |
+| 08 | `ProjectionLayer` | IN PROGRESS | Present (copied from `-12`); clean — no bugs |
+| 09 | `class Transformer` | IN PROGRESS | Present (copied from `-12`); clean; `build_transformer` absent — must be written from scratch |
 
 Note: `FeedForwardBlock` is not a standalone submission block but is required internally by `EncoderBlock` and `DecoderBlock`. Also needed: `Encoder` and `Decoder` stack classes (from `-09`/`-10`).
 
@@ -116,19 +122,24 @@ Building `model.py` — a single file containing all 9 required blocks for the C
 - **`model.py`** exists as an untracked new file (not yet committed to git).
 - Blocks 01–05 are present in `model.py`, sourced from `CSCI_440-08-m+c_1.4.py`. All syntax bugs from that source file are still present — none have been fixed yet.
 - Block 05 (`ResidualConnection`) is nested at 8-space indent inside `MultiHeadAttentionBlock` in `model.py` — must be moved to module level.
-- Blocks 06–09 are placeholder stub comments only (`# Block 06: EncoderBlock -- TODO`, etc.).
+- Blocks 06–09 were stub comments only at session start; all four blocks were added to `model.py` this session (2026-02-19), copied verbatim from their best source files. No bugs were fixed during the copy — all source file issues are present in `model.py` as copied.
+  - Block 06 (`EncoderBlock` + `Encoder`) — from `-09`; still nested 8-space inside `MultiHeadAttentionBlock`
+  - Block 07 (`DecoderBlock` + `Decoder`) — from `-10`; `DecoderBlock` comment blocks at 0 indent (outside class body)
+  - Block 08 (`ProjectionLayer`) — from `-12`; clean, no bugs
+  - Block 09 (`class Transformer`) — from `-12`; clean; ends with truncated `build_transformer` comment — must be written from scratch
 - **`transformer.py`** (older combined file) — superseded by the assignment requirement to use `model.py`.
+- **`CSCI_440-12-m+c_1.0.py`** discovered (2026-02-19) — most complete lecture file to date. Contains all 9 blocks. `class Transformer` (Block 09) appears here for the first time and is architecturally complete with no syntax bugs. `build_transformer` factory function is absent (truncated comments only).
+- **`CSCI_440-10-m+c_1.1.py`** and **`CSCI_440-12-m+c_1.1.py`** discovered (2026-02-19) — minor revisions of their `-1.0` counterparts. Neither version fixes any bugs. `-10-1.1` adds only a `#todo` comment block. `-12-1.1` adds a `#I. Math` section with a LogSoftmax example and seaborn plot. `build_transformer` is still absent in `-12-1.1`. No change to best source recommendations for any block.
 
 ### Remaining Tasks
 
 1. Fix all syntax bugs in `model.py` Blocks 01–05 (full bug list in the anomaly table above; none fixed yet)
 2. Move `ResidualConnection` (Block 05) from 8-space indent inside MHA to module level (0 indent)
-3. Add `EncoderBlock` + `Encoder` stack to `model.py` (source: `-09`, fix nesting from MHA class)
-4. Add `FeedForwardBlock` body fix — stray `?` on line 173 must become a `#` comment
-5. Add `DecoderBlock` + `Decoder` stack to `model.py` (source: `-10`/`-11`, fix comment indentation)
-6. Add `ProjectionLayer` to `model.py` (source: `-11`, clean — no bugs)
-7. Write `class Transformer` (Block 09) — not in any lecture file, must be authored from scratch
-8. Run each block and capture output screenshots for the `.docx` submission
+3. Fix `FeedForwardBlock` — stray `?` character must become a `#` comment [Done?]
+4. Fix `EncoderBlock` + `Encoder` (Block 06) — move from 8-space inside MHA to module level (0 indent)
+5. Fix `DecoderBlock` (Block 07) — move comment blocks from 0 indent to correct 4-space indent inside class body [Done?]
+6. Write `build_transformer` factory function from scratch — absent from all lecture files; `class Transformer` (Block 09) is present and clean
+7. Run each block and capture output screenshots for the `.docx` submission
 
 ### Code Quality Assessment
 

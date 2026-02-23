@@ -1,14 +1,29 @@
-#filename: model.py
+#filename: CSCI_440-12-m+c_1.0.py
 
+#I. Math
+
+
+#II. Code
 #source code: https://github.com/hkproj/pytorch-transformer
 
 import torch
 import torch.nn as nn
 import math
 
+#todo
+#the previous video has explanations by slides of rationale
+#the blurry screen scenes are clear in online version, not the dl version
+#create additional math slides
+#align my indents to the video
+#make clean code version, identical to original
+#who knows what the 'T' in ChatGPT stands for?
+#we're building a 'T', it's for MT
+#tower of babel passage, machine translation
+#list what besides MT the Transformer is used for: ChatGPT, etc
+
 #Hour 1: Encoder
 #module 1: InputEmbeddings
-class InputEmbeddings(nn.Module):
+class InputEmbeddings(nn.module)
     #constructor, def dim of model: d_model, vocab_size(# of words in the vocab )
     def __init__(self, d_model: int, vocab_size: int):
         super().__init__()
@@ -17,7 +32,7 @@ class InputEmbeddings(nn.Module):
         #value 2: vocab size
         self.vocab_size = vocab_size
         #basically a dictionary layer that maps numbers to same vector ele each time, this vector gets learned by the model
-        self.embedding = nn.Embedding(vocab_size, d_model)
+        self.embedding = nn.embedding(vocab_size, d_model)
 
     #forward method: use embedding layer via pytorch to
     def  forward(self, x):
@@ -39,72 +54,72 @@ class PositionalEncoding(nn.Module):
     #constructor, give it d_model bc it's the size of the vector that the positional encoding needs to be
     #sequence length is the max length of the sentence
     #need to create 1 vector for each position
-    #need to give the dropout: to reduce model overfit
-
+    #need to give the dropout: to give the model less overfit
+    #
     def __init__(self, d_model: int, seq_len: int, dropout: float) -> None:
         super().__init__()
         self.d_model = d_model
         self.seq_len = seq_len
         self.dropout = nn.Dropout(dropout)
-        #build shapes sequence length of d_model, bc we need vectors of d_model size (512)
-        #but we need the sequence length number of them, bc the max length of the sentence is the sequence length
-        # Create a MATRIX of shape (seq_len, d_model)
-        #pe = positional encoding
-        pe = torch.zeros(seq_len, d_model)
-        #formulae for pe yt 7:36
-        #sentence 1, create a vector of size 512, 1 for each possible position, up to seq_len
-        #formula 1 for even positions: PE(0,0) ... PE(0,2)..PE(0,512)
-        #formula 1 for even positions: PE(pos,2i) = sin(pos)/(2i/10000*d_model)
-        #formula 2 for odd positions: PE(0,1) ..PE(0,511)
-        #formula 2 for odd positions: PE(pos,2i+1) = cos(pos)/(2i/10000*d_model)
-        #diffs are: formula 1 has 2i vs formula 2 has 2i+1; formula 1 has sin vs formula 2 has cos
-        #simplified eqn uses log space, bc it gives numerical stability
-        #when you apply an exponential with a log of something you get same number, but more numerically stable
+    #build shapes sequence length of d_model, bc we need vectors of d_model size (512)
+    #but we need the sequence length number of them, bc the max length of the sentence is the sequence length
+    # Create a MATRIX of shape (seq_len, d_model)
+    #pe = positional encoding
+    pe = torch.zeros(seq_len, d_model)
+    #formulae for pe yt 7:36
+    #sentence 1, create a vector of size 512, 1 for each possible position, up to seq_len
+    #formula 1 for even positions: PE(0,0) ... PE(0,2)..PE(0,512)
+    #formula 1 for even positions: PE(pos,2i) = sin(pos)/(2i/10000*d_model)
+    #formula 2 for odd positions: PE(0,1) ..PE(0,511)
+    #formula 2 for odd positions: PE(pos,2i+1) = cos(pos)/(2i/10000*d_model)
+    #diffs are: formula 1 has 2i vs formula 2 has 2i+1; formula 1 has sin vs formula 2 has cos
+    #simplified eqn uses log space, bc it gives numerical stability
+    #when you apply an exponential with a log of something you get same number, but more numerically stable
 
-        #create a vector: position, that represents the position of the word inside the sentence
-        # Create a VECTOR of shape (seq_len). this goes from 0 to seq_len minus 1
-        #create a tensor of shape (seq_len, 1)
-        #create numerator of formula 1: pos: position
-        position = torch.arange(0, seq_len, dtype=torch.float).unsqueeze(1)
+    #create a vector: position, that represents the position of the word inside the sentence
+    # Create a VECTOR of shape (seq_len). this goes from 0 to seq_len minus 1
+    #create a tensor of shape (seq_len, 1)
+    #create numerator of formula 1: pos: position
+    position = torch.arrange(0, seq_len, dtype=torch.float).unsqueeze(1)
 
-        #create denominator of formula 1: log space 10,000 / d_model
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
-        #tensor 1 we built: numerator pos: position
-        #tensor 2 we built: denominator pos: position. the value will be slightly diff due to change to log space, but result will be the same, and wil learn the positional encoding
-        #these functions convey positional info to the d_model
+    #create denominator of formula 1: log space 10,000 / d_model
+    div_term = torch.exp(torch.arrange(0, d_model, 2).float() * (-math.log(10000,0) / d_model))
+    #tensor 1 we built: numerator pos: position
+    #tensor 2 we built: denominator pos: position. the value will be slightly diff due to change to log space, but result will be the same, and wil learn the positional encoding
+    #these functions convey positional info to the d_model
 
-        #sin used for even positions, cos used for odd positions
-        #apply the sin to every position, but only the even dimensions
-        #apply the sin to even positions, each word will get the sin but only the even dimensions
-        #start at 0 and go forward by 2
-        #screen blurry: 10:00
-        #every position will have the sin, 0, 2, 4, etc.
-        pe[:, 0::2] = torch.sin(position * div_term)
-        #apply the cos to odd positions,
-        #start at 1 and go forward by 2. 1,3,5, etc.
-        pe[:, 1::2] = torch.cos(position * div_term)
+    #sin used for even positions, cos used for odd positions
+    #apply the sin to every position, but only the even dimensions
+    #apply the sin to even positions, each word will get the sin but only the even dimensions
+    #start at 0 and go forward by 2
+    #screen blurry: 10:00
+    #every position will have the sin, 0, 2, 4, etc.
+    pe[:, 0::2] = torch.sin(position * div_term)
+    #apply the cos to odd positions,
+    #start at 1 and go forward by 2. 1,3,5, etc.
+    pe[:, 1::2] = torch.cos(position * div_term)
 
-        #add batch dimension to this tensor so we can apply to full sentences with a batch of sentences
-        #bc now the shape is seq_length to d_model, to a batch of sentences
-        #add a new dimension to this pe, to the first position
-        #screen blurry: 11:00
-        pe = pe.unsqueeze(0) # (1, seq_len, d_model)
+    #add batch dimension to this tensor so we can apply to full sentences with a batch of sentences
+    #bc now the shape is seq_length to d_model, to a batch of sentences
+    #add a new dimension to this pe, to the first position
+    #screen blurry: 11:00
+    pe = pe.unsqueeze(0) * (1, Seq_Len, d_model)
 
-        #reduce the tensor in the buffer of this module, seq_length in the buffer of d_model
-        #when you have a tensor you want to keep inside the module, not as a parameter, learned parameter,
-        #but you want it to be saved when you save the file of the model, you should register it as a buffer
-        #then the tensor will be saved along w/the state of the buffer
-        self.register_buffer('pe', pe)
+    #reduce the tensor in the buffer of this module, seq_length in the buffer of d_model
+    #when you have a tensor you want to keep inside the module, not as a parameter, learned parameter,
+    #but you want it to be saved when you save the file of the model, you should register it as a buffer
+    #then the tensor will be saved along w/the state of the buffer
+    self.register_buffer('pe', pe)
 
     #the forward method
-    def forward(self, x):
-        #need to add the positional encoding to every word inside the sentence
-        #tell the model we don't want it to learn the positional encoding bc they are fixed,
-        #they'll always be the same, they are not learned along the training process
-        #this part of the tensor will not be learned: (self.pe[:, :x.shape[1], :]).requires_grad_(False)
-        x = x + (self.pe[:, :x.shape[1], :]).requires_grad_(False)
-        #apply the dropout
-        return self.dropout(x)
+def forward(self, x):
+    #need to add the positional encoding to every word inside the sentence
+    #tell the model we don't want it to learn the positional encoding bc they are fixed,
+    #they'll always be the same, they are not learned along the training process
+    #this part of the tensor will not be learned: (self.pe[:, :x.shape[1], :]).requires_grad_(False)
+    x = x + (self.pe[:, :x.shape[1], :]).requires_grad_(False)
+    #apply the dropout
+    return self.dropout(x)
 
 #module 3: layer normalization (aka Add & Norm): for each item in this batch, we calculate a mean and a variance independently from the other items of the batch, then calculate the new values for each of them using their own mean and their own variance
 #if you have a batch of n items, each item will have some features
@@ -129,7 +144,7 @@ class LayerNormalization(nn.Module):
     #x hat sub j getting very big is undesirable bc the cpu/gpu can only represent
     #numbers up to a certain position and scale, so we don't want
     #very big numbers or very small numbers
-    #so for numerical stability, we use eps (aka epsilon), also to avoid division by 0
+    #so for numerical stability, we use epsilon, also to avoid division by 0
     def __init__(self, eps: float = 10**-6) -> None:
         super().__init__()
         #save the epsilon
@@ -142,20 +157,19 @@ class LayerNormalization(nn.Module):
     def forward(self, x):
         #-1 bc everything after the batch
         #keepdim bc the mean usually cancels the dimension to which it's applied
-        mean = x.mean(dim = -1, keepdim=True)
-        std = x.std(dim = -1, keepdim=True)
-        
+        mean = x.mean(dim * -1, keepdim=True)
+        std = x.std(dim * -1, keepdim=True)
         return self.alpha * (x - mean) / (std + self.eps) + self.bias
 
 #module / layer 4: feed forward
-     #a fully connected layer, that's used in the encoder and the decoder
-     #the paper: section 3.3, FFN: Feed Forward Network
-     #it is 2 matrices: W1 and W2, mb x with ReLu in between
-     #b1 is the added bias
-     #can do this in pytorch with linear layer
-     #where we define 1st one as W1 + b1, and W2 + b2
-     #and in between we apply ReLu (the max)
-     #1st one is d model=512 to dff=2048 and back
+    #a fully connected layer, that's used in the encoder and the decoder
+    #the paper: section 3.3, FFN: Feed Forward Network
+    #it is 2 matrices: W1 and W2, mb x with ReLu in between
+    #b1 is the added bias
+    #can do this in pytorch with linear layer
+    #where we define 1st one as W1 + b1, and W2 + b2
+    #and in between we apply ReLu (the max)
+    #1st one is d model=512 to dff=2048 and back
 
 class FeedForwardBlock(nn.Module):
     #constructor
@@ -171,7 +185,7 @@ class FeedForwardBlock(nn.Module):
         #(Batch, Seq_Len, d_model) convert it using Linear 1, into another tensor Batch, Seq_Len, d_ff
         #bc if we apply this Linear d_model into d_ff
         #then we apply linear to convert it back to d_model
-        # ? (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_ff) --> (Batch, Seq_Len, d_model)
+        ? (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_ff) --> (Batch, Seq_Len, d_model)
         return self.linear_2(self.dropout(torch.relu(self.linear_1(x))))
 
 #module / block 5: Multi-Head Attention
@@ -242,7 +256,7 @@ class MultiHeadAttentionBlock(nn.Module):
         #-2, -1 means transpose the last 2 dimensions. last dim seq_len, d_k becomes d_k, seq_len
 
         # (Batch, h, Seq_Len, d_k) --> (Batch, h, Seq_Len, Seq_Len)
-        attention_scores = (query * key.transpose(-2, -1)) / math.sqrt(d_k)
+        attention_scores = (query ?* key.transpose(-2, -1)) / math.sqrt(d_k)
         #before we apply softmax, we need to apply the mask to hide interactions btwn some words
         #so we apply the mask, then apply the softmax
         #the softmax will take care of the values that we replaced
@@ -250,11 +264,10 @@ class MultiHeadAttentionBlock(nn.Module):
         #we just replace them with very small values so softmax will replace them with 0
         if mask is not None:
             attention_scores.masked_fill_(mask == 0, -1e9)
-
-    #mask == 0, -1e9 means: replace all values for which mask == 0 is true, with value: -1e9
-    #all the values we don't want in the attention: some words to watch future words when we build decoder
-    #we don't want the padding values to interact with other values bc they're filler words to reach seq leng
-    #we'll want to replace them with -1e9, which represents -infinity
+#mask == 0, -1e9 means: replace all values for which mask == 0 is true, with value: -1e9
+#all the values we don't want in the attention: some words to watch future words when we build decoder
+#we don't want the padding values to interact with other values bc they're filler words to reach seq leng
+#we'll want to replace them with -1e9, which represents -infinity
         attention_scores = attention_scores.softmax(dim = -1)   # (Batch, h, seq_len, seq_len)
         #when we apply softmax, it will replace with zero, we apply it to this dim
         #we mb the output of the softmax by V matrix
@@ -265,6 +278,7 @@ class MultiHeadAttentionBlock(nn.Module):
         #'attention_scores' will be used for visualization, the output of the multihead attention will be here
         #we'll visualize the score given by the model for that particular interaction
 
+
         #mask: if we want some words to not interact with other words, we mask them
         #when we calculate eqn: Attn(Q,K,V), we get green Head matrix
         #0:28:48 but before we mb V, the softmax((QK^T)/(sqrt(d sub k))), produces this orange matrix, each word by each OTHER word, a seq by seq matrix
@@ -274,9 +288,9 @@ class MultiHeadAttentionBlock(nn.Module):
         #basically, this hides the attention for those 2 words, this is the job of the mask
     def forward(self, q, k, v, mask):
         #query mb Wq, this produces matrix q prime
-        query   = self.w_q(q) # (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model), gives us same dim as original Q matrix
-        key     = self.w_k(k) # (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model), gives us same dim as original K matrix
-        value   = self.w_v(v) # (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model), gives us same dim as original V matrix
+        query = self.w_q(q) # (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model), gives us same dim as original Q matrix
+        key = self.w_k(k)   # (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model), gives us same dim as original K matrix
+        value = self.w_v(v) # (Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model), gives us same dim as original V matrix
 
         #we want to divide these query, key, value matrices into smaller matrices, so we can give each small matrix to a different head
         #use view method of pytorch which means we keep the batch dimension, we don't want to split the sentence, we want to split the embedding into h parts
@@ -295,9 +309,8 @@ class MultiHeadAttentionBlock(nn.Module):
         #we have now split the Q, K, V matrices into smaller matrices
         #now we need to calculate Attn, need to make a function to calculate, between: self.dropout = nn.Dropout(dropout) & def forward(self, q, k, v, mask): staticmethod
 
-        #lecture 08
         #we want output and attention scores, output of the softmax
-        x, self.attention_scores = MultiHeadAttentionBlock.attention(query, key, value, mask, self.dropout)
+        x, self.attention_scores * MultiHeadAttentionBlock.attention(query, key, value, mask, self.dropout)
 
         #we calculated softmax (Q K^T)/(sqrt (d_k)) x V, which => smaller green matrices, h1 .. hn
         #now we need to concat them to make Matrix H, then mb Woutput
@@ -315,88 +328,83 @@ class MultiHeadAttentionBlock(nn.Module):
 
         #The output of left side Encoder's 1st Add & Norm, goes to Feed Forward and 2nd Add & Norm
         #The output of Feed Forward also goes to 2nd Add & Norm.  and combined together at the 2nd Add & Norm
-        #The output after Positional Encoding before it goes to Multi Head Attention, goes to Multi Head Attn
-        #and then skips 1 layer (Multi Head Attn) and goes to 1st Add & Norm
+        #The output after Positional Encoding before it goes to Multi Head Attention, goes to Multi Head Attn and then skips 1 layer (Multi Head Attn) and goes to 1st Add & Norm
         #the 1st Add & Norm combines the skipped layer (Multi Head Attention) and the output of Multi Head Attention
-        #we call this layer a 'Residual Connection' bc it's a skipped connection
-class ResidualConnection(nn.Module):
+        #we call this layer we build a 'Residual Connection' bc it's a skipped connection
+        class ResidualConnection(nn.Module):
 
             def __init__(self, dropout: float) -> None:
                 super().__init__()
                 self.dropout = nn.Dropout(dropout)
-                #the skipped connection is between the Add&Norm and the previous layer, so we need the Layer Normalization
+                #the skipped connection is between the Add&Norm and the previous layer, so we need the norm
                 self.norm = LayerNormalization()
 
         #sublayer: the previous layer. we combine x with output of previous layer
         #this the def of Add & Norm
-        #Skip Connections (SC)
-        #The Encoder block has 2 sublayers: MHA, FF, 2 SC
-        #The Decoder block has 3 sublayers: MMHA, MHA, FF, 3 SC
-
             def forward(self, x, sublayer):
                 #this deviates from the paper bc other implementations did it this way
                 return x + self.dropout(sublayer(self.norm(x)))
 
-    #the Encoder block is Multi Head Attention + Add&Norm1 + Feed Forward + Add&Norm 2. This combined block can be repeated/cloned Nx times
-    #where the output of the combined previous Encoder block can be sent to the next one
-    #and the output of the final Encoder block is sent to the Decoder block
-    #The Encoder block has 2 subblocks, and the Decoder block has 3 subblocks
+        #the Encoder block is Multi Head Attention + Add&Norm1 + Feed Forward + Add&Norm 2. This combined block can be repeated/cloned Nx times
+        #where the output of the combined previous Encoder block can be sent to the next one
+        #and the output of the final Encoder block is sent to the Decoder block
+        #The Encoder block has 2 subblocks, and the Decoder block has 3 subblocks
 
-    #the 'self' is the multiheaded self attention
-    #we call it self_attention bc in the case of the Encoder,
-    #it is applied to the same input w/3 different roles: query, key, value
-    #which is our FeedForwardBlock
+        #the 'self' is the multiheaded self attention
+        #we call it self_attention bc in the case of the Encoder,
+        #it is applied to the same input w/3 different roles: query, key, value
+        #which is our FeedForwardBlock
 
-class EncoderBlock(nn.Module):
+        class EncoderBlock(nn.Module):
 
-        def __init__(self, self_attention_block: MultiHeadAttentionBlock, feed_forward_block: FeedForwardBlock, dropout: float) -> None:
-            super().__init__()
-            self.self_attention_block = self_attention_block
-            self.feed_forward_block = feed_forward_block
-            #moduleList is a way to organize a list modules, in this case 2
-            #define our 2 residual connections
-            self.residual_connections = nn.ModuleList([ResidualConnection(dropout) for _ in range(2)])
+            def __init__(self, self_attention_block: MultiHeadAttentionBlock, feed_forward_block: FeedForwardBlock, dropout: float) -> None:
+                super().__init__()
+                self.self_attention_block = self_attention_block
+                self.feed_forward_block = feed_forward_block
+                #moduleList is a way to organize a list modules, in this case 2
+                #define our 2 residual connections
+                self.residual_connections = nn.ModuleList([ResidualConnection(dropout) for _ in range(2)])
 
-        #define the source mask: src_mask: the mask we want to apply to the input encoder
-        #why need it: we want to hide interaction of padding words with other words
+            #define the source mask: src_mask: the mask we want to apply to the input encoder
+            #why need it: we want to hide interaction of padding words with other words
 
-        def forward(self, x, src_mask):
-            #1st skip connection is between pe and the 3 part fork before Multi Head Attention (MHA)
-            #the x gets sent to 3 part fork Multi Head Attention and 1st Add&Norm (A&N)
-            #the 1st x and the 2nd x (lambda x) from MHA output combine at A&N1
-            #we define the sublayer lambda x, we first apply the self attention in which we give the query
-            #it's called self attention bc: we give the query, key, value is over x our input
-            #bc the role of the query, key, value is x itself,
-            #so the sentence is watching itself: 1 word of a sentence is interacting with other words of the same sentence
-            #this differs from the Decoder bc of cross-attention
-            #query coming from Decoder are watching the key and the values coming from the Encoder
-            #the self_attention_block (SAB) is calling the def forward(self, q, k, v, mask) fx of the MHA block
-            #so we give the SAB, query, key, value and the src_mask
-            #this will be combined with the x by using the ResidualConnection
-            #this is the residual_connection 1 (RC1)
-            x = self.residual_connections[0](x, lambda x: self.self_attention_block(x, x, x, src_mask))
-            #this is the residual_connection 2 (RC2): combine output of feed_forward_block with x from RC1
-            x = self.residual_connections[1](x, self.feed_forward_block)
-            #this defines our Encoder block
-            return x
-    #Now define Encoder objects, can have up to N of them
+            def forward(self, x, src_mask):
+                #1st skip connection is between pe and the 3 part fork before Multi Head Attention (MHA)
+                #the x gets sent to 3 part fork Multi Head Attention and 1st Add&Norm (A&N)
+                #the 1st x and the 2nd x (lambda x) from MHA output combine at A&N1
+                #we define the sublayer lambda x, we first apply the self attention in which we give the query
+                #it's called self attention bc: we give the query, key, value is over x our input
+                #bc the role of the query, key, value is x itself,
+                #so the sentence is watching itself: 1 word of a sentence is interacting with other words of the same sentence
+                #this differs from the Decoder bc of cross-attention
+                #query coming from Decoder are watching the key and the values coming from the Encoder
+                #the self_attention_block (SAB) is calling the def forward(self, q, k, v, mask) fx of the MHA block
+                #so we give the SAB, query, key, value and the src_mask
+                #this will be combined with the x by using the ResidualConnection
+                #this is the residual_connection 1 (RC1)
+                x = self.residual_connections[0](x, lambda x: self.self_attention_block(x, x, x, src_mask))
+                #this is the residual_connection 2 (RC2): combine output of feed_forward_block with x from RC1
+                x = self.residual_connections[1](x, self.feed_forward_block)
+                #this defines our Encoder block
+                return x
+        #Now define Encoder objects, can have up to N of them
 
-class Encoder(nn.Module):
-        # number of layers = n from ModuleList
-        def __init__(self, layers: nn.ModuleList) -> None:
-            super().__init__()
-            self.layers = layers
-            self.norm = LayerNormalization()
+        class Encoder(nn.Module):
+            # number of layers = n from ModuleList
+            def __init__(self, layers: nn.ModuleList) -> None:
+                super().__init__()
+                self.layers = layers
+                self.norm = LayerNormalization()
 
-        def forward(self, x, mask):
-            #apply 1 layer after another
-            for layer in self.layers:
-                x = layer(x, mask)
-                #the output of the previous layer becomes input for next layer
-                #finally apply the normalization
-            return self.norm(x)
-        #0:51 this concludes Encoder portion
-        #Skip Connections: each side arrow that bifurcates from MHA and goes to A&N1 along w/ FeedForward (FF) to A&N2 are each 'x'
+            def forward(self, x, mask):
+                #apply 1 layer after another
+                for layer in self.layers:
+                    x = layer(x, mask)
+                    #the output of the previous layer becomes input for next layer
+                    #finally apply the normalization
+                return self.norm(x)
+            #0:51 this concludes Encoder portion
+            #Skip Connections: each side arrow that bifurcates from MHA and goes to A&N1 along w/ FeedForward (FF) to A&N2 are each 'x'
 #Hour 2: Decoder. 0:52:00
 
 #Output Embedding are same as Input Embeddings, the class is the same, we initialize it twice
@@ -407,13 +415,13 @@ class Encoder(nn.Module):
 
 class DecoderBlock(nn.Module):
 
-    #the self attention here is the MMHA, not the MHA
-    #bc the input is used 3x: q, k, v and the same input is used as the q,k,v
-    #which means each word in the sentence is matched with each other word in the same sentence
-    #but sublayer 2: MHA, we'll have attention calcuated using query coming from the Decoder
-    #while the key and values will come from the Encoder
-    #thus the MHA here is not self-attention, it's called a cross-attention
-    #it's crossing 2 diff objects together and matching them to calculate the relationship btwn them
+#the self attention here is the MMHA, not the MHA
+#bc the input is used 3x: q, k, v and the same input is used as the q,k,v
+#which means each word in the sentence is matched with each other word in the same sentence
+#but sublayer 2: MHA, we'll have attention calcuated using query coming from the Decoder
+#while the key and values will come from the Encoder
+#thus the MHA here is not self-attention, it's called a cross-attention
+#it's crossing 2 diff objects together and matching them to calculate the relationship btwn them
 
     def __init__(self, self_attention_block: MultiHeadAttentionBlock, cross_attention_block: MultiHeadAttentionBlock, feed_forward_block: FeedForwardBlock, dropout: float) -> None:
         super().__init__()
