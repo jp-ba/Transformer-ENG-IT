@@ -1,6 +1,6 @@
 #filename: model.py
 
-#source code: https://github.com/hkproj/pytorch-transformer
+#Joseph Paul Belo Almuete
 
 import torch
 import torch.nn as nn
