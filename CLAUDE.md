@@ -15,7 +15,22 @@ python "CSCI_440-03-m+c_1.7.py"
 python "CSCI_440-04-m+c_1.1.py"
 ```
 
+**Model file (assignment submission):**
+```bash
+python model_BeloAlmuete_JosephPaul.py
+```
+
+**Training (once pipeline files are created and bugs fixed):**
+```bash
+python train.py
+```
+
 **Dependencies:** `torch` (PyTorch), `math` (stdlib)
+
+**Training pipeline dependencies (pip install):**
+```
+pip install torch datasets tokenizers tensorboard tqdm torchmetrics
+```
 
 ## Architecture
 
@@ -43,21 +58,41 @@ Each file is a cumulative lecture snapshot — later files repeat earlier blocks
 
 - **`CSCI_440-12-m+c_1.0.py`** — All blocks 01–09 present. **`class Transformer` (Block 09) appears here for the first time — clean, no syntax bugs.** Same bugs as `-11` for blocks 01–05 (`nn.module`/`nn.embedding` lowercase, `torch.arrange`, `math.log(10000,0)`, `?*` bug in `attention`, missing `@staticmethod`, missing `=` on attention assignment, `PositionalEncoding` indentation + `forward` at module level, `dim * -1`). `ResidualConnection`, `EncoderBlock`, and `Encoder` still nested inside `MultiHeadAttentionBlock` at 8-space indent. `DecoderBlock` comment blocks are at 0 indent (outside class body); `Decoder` is at module level — correct. `ProjectionLayer` is clean. `build_transformer` factory function is absent — only truncated description comments exist (file ends mid-comment at line 540).
 
-- **`CSCI_440-12-m+c_1.1.py`** — Minor revision of `-1.0`. Adds a `#I. Math` section at the top of the file with a `LogSoftmax` example and seaborn plotting code (requires `matplotlib` and `seaborn` imports not present in the `#II. Code` section). **No bugs fixed** — all bugs from `-1.0` are identical: `nn.module`/`nn.embedding` lowercase, `torch.arrange`, `math.log(10000,0)`, `dim * -1`, stray `?`, `?*` in `attention`, missing `@staticmethod`, missing `=`, `ResidualConnection`/`EncoderBlock`/`Encoder` nested at 8-space inside MHA, `DecoderBlock` comment blocks at 0 indent. `build_transformer` factory function still absent — file ends at the same mid-comment truncation point (line 571, `#hyperparam hidden layer (a feed fwd): d_ff =`). `class Transformer` remains clean. Not a better source than `-1.0` for any block.
+- **`CSCI_440-12-m+c_1.1.py`** — Minor revision of `-1.0`. Adds a `#I. Math` section at the top of the file with a `LogSoftmax` example and seaborn plotting code (requires `matplotlib` and `seaborn` imports not present in the `#II. Code` section). **No bugs fixed** — all bugs from `-1.0` are identical. `build_transformer` still absent. Not a better source than `-1.0` for any block.
+
+- **`CSCI_440-13-m+c_1.3.py`** — All blocks 01–09 with same bugs as `-12`, **PLUS `build_transformer` factory function (NEW — Block 10 source)**. `build_transformer` is complete and clean (lines 570–628): creates embeddings, PE, N encoder/decoder blocks, projection layer, initializes weights with Xavier uniform. Also includes lecture notes on dataset/training pipeline setup at the end (lines 631+). **Best source for `build_transformer`.**
+
+- **`CSCI_440-15-m+c_train_1.1.py`** — First version of `train.py` content. Contains `greedy_decode`, `run_validation`, `get_all_sentences`, `get_or_build_tokenizer`, `get_ds`, `get_model`. `get_all_sentences` is indented inside `run_validation` (indentation bug). `WorldLevelTrainer` import name is wrong (should be `WordLevelTrainer`).
+
+- **`CSCI_440-16_m+c_dataset_1.3.py`** — **`dataset.py` source**: `BilingualDataset` class + `causal_mask` function. Has 3 bugs (see dataset.py bugs table below). `CSCI_440-16_m+c_dataset_mylist_1.1.py` is a standalone Python demo of `__getitem__` — not part of the pipeline.
+
+- **`CSCI_440-17-m+c_config_1.1.py`** — **`config.py` source**: `get_config()` dict and `get_weights_file_path()`. Bug: `get_weights_file_path` references `config['model_basename']` but `get_config()` has key `'model_filename'` — must be reconciled (either rename the key or fix the reference).
+
+- **`CSCI_440-18-m+c_1.1.py`** — Cumulative train.py content. Adds `train_model` function stub with device setup, dataset load, model build, TensorBoard, Adam optimizer, preload block, and `loss_fn`. Two syntax bugs: `print(f'Using device {device}'')` (extra quote), `.get_vocab_size().to(device)` called on tokenizer instead of model.
+
+- **`CSCI_440-19-m+c_1.1.py`** — Adds epoch/batch training loop to `train_model`. Adds `global_step`, `loss.backward()`, `optimizer.step()`, epoch-end `torch.save`. Bug: `time.sleep(180)` references unimported `time` module. `if __name__ == '__main__':` block is indented inside `train_model` (should be module-level).
+
+- **`CSCI_440-20-m+c_1.1.py`** — Same content as `-19`.
+
+- **`CSCI_440-21-m+c_1.1.py`** — **Cleanest version of `train_model`**. Fixes `.get_vocab_size().to(device)` bug. Still has: `loss_fn` inside `if config['preload']:` block (should be outside); `if __name__ == '__main__':` still inside `train_model`; missing `model.load_state_dict(state['model_state_dict'])` in preload section. **Best source for `train.py`.**
+
+- **`CSCI_440-23-m+c_1.1.py`** — Adds updated `greedy_decode` / `run_validation` and moves `get_all_sentences` to module level (fixing the indentation bug from `-15`). Bug: `get_all_sentences` is still indented inside `run_validation` in this file (lines 175–179 — same bug persists). Use `-21` as the base and fix `get_all_sentences` manually.
 
 ### Best Source Per Block
 
-| Block | Class | Best Source File | Notes |
-|-------|-------|-----------------|-------|
+| Block | Class / Function | Best Source File | Notes |
+|-------|-----------------|-----------------|-------|
 | 01 | `InputEmbeddings` | `-08` | `-02` has more docs but same bugs |
 | 02 | `PositionalEncoding` | `-08` | All files have same bugs |
 | 03 | `LayerNormalization` | `-08` | All files identical |
+| 04 | `FeedForwardBlock` | `-08` | Clean after fixing stray `?` |
 | 04 | `MultiHeadAttentionBlock` | **`-09`** | Only file with correct `@` operator |
 | 05 | `ResidualConnection` | `-09` | All files nest it inside MHA incorrectly |
 | 06 | `EncoderBlock` + `Encoder` | `-09` | Both nested inside MHA incorrectly in all files |
-| 07 | `DecoderBlock` + `Decoder` | `-10`/`-11`/`-12` | Comment blocks outside class body; `-10-1.0` and `-10-1.1` are identical for this block |
-| 08 | `ProjectionLayer` | **`-11`** or **`-12`** | Clean — no bugs in either; `-12-1.0` and `-12-1.1` identical for this block |
-| 09 | `class Transformer` | **`-12`** | First and only appearance; no syntax bugs; `build_transformer` absent in both `-1.0` and `-1.1` |
+| 07 | `DecoderBlock` + `Decoder` | `-10`/`-11`/`-12` | Comment blocks outside class body; `-10-1.0` and `-10-1.1` identical |
+| 08 | `ProjectionLayer` | **`-11`** or **`-12`** | Clean — no bugs in either |
+| 09 | `class Transformer` | **`-12`** / **`-13`** | First appearance; no syntax bugs; identical in both |
+| 10 | `build_transformer` | **`-13`** | First and only appearance; clean (lines 570–628) |
 
 ### Syntax Issues in `CSCI_440-08-m+c_1.4.py` (source for model.py compilation)
 
@@ -88,58 +123,123 @@ Each file is a cumulative lecture snapshot — later files repeat earlier blocks
 
 ## Assignment Deliverables
 
-**Due: 02/24/2026 at 10:30am PST**
+**Due: 02/24/2026 at 10:30am PST** (already passed — training pipeline is ongoing coursework)
 
 Submit two files on Canvas:
-- `model_Lname_Fname.py` — all 9 blocks in a single file
+- `model_Lname_Fname.py` — all 9 blocks in a single file → **`model_BeloAlmuete_JosephPaul.py`**
 - `model_Lname_Fname.docx` — screenshot of output for each block
 
-**All code goes in one `model.py` file** — not split across a `modules/` directory.
+**All model code goes in one file** — `model_BeloAlmuete_JosephPaul.py`.
 
 ## Required Blocks (from `Copy of template_CSCI_440_MC_Lname_Fname.md`)
 
-| Block | Class | Status | model.py state |
-|-------|-------|--------|----------------|
-| 01 | `InputEmbeddings` | IN PROGRESS | Present; `nn.embedding` bug unfixed |
-| 02 | `PositionalEncoding` | IN PROGRESS | Present; indentation + `torch.arrange` + log bug unfixed; `forward` at module level |
-| 03 | `LayerNormalization` | IN PROGRESS | Present; `dim * -1` bug unfixed |
-| 04 | `FeedForwardBlock` | IN PROGRESS | Present; stray `?` on line 173 unfixed |
-| 04 | `MultiHeadAttentionBlock` | IN PROGRESS | Present; `?*` bug + missing `@staticmethod` + missing `=` unfixed |
-| 05 | `ResidualConnection` | IN PROGRESS | Present but nested 8-space inside MHA — needs move to module level |
-| 06 | `EncoderBlock` + `Encoder` | IN PROGRESS | Present (copied from `-09`); still nested 8-space inside MHA — needs move to module level |
-| 07 | `DecoderBlock` + `Decoder` | IN PROGRESS | Present (copied from `-10`); `DecoderBlock` comment blocks at 0 indent (outside class body) — needs fix |
-| 08 | `ProjectionLayer` | IN PROGRESS | Present (copied from `-12`); clean — no bugs |
-| 09 | `class Transformer` | IN PROGRESS | Present (copied from `-12`); clean; `build_transformer` absent — must be written from scratch |
+| Block | Class | Status | Current state in model file |
+|-------|-------|--------|-----------------------------|
+| 01 | `InputEmbeddings` | DONE | `nn.Embedding` fixed; clean |
+| 02 | `PositionalEncoding` | DONE | `torch.arange`, log, indentation, `forward` all fixed; clean |
+| 03 | `LayerNormalization` | DONE | `dim=-1` fixed; clean |
+| 04 | `FeedForwardBlock` | DONE | Stray `?` fixed; clean |
+| 04 | `MultiHeadAttentionBlock` | **BUG** | `*` instead of `@` (line 245); missing `@staticmethod` (line 237) |
+| 05 | `ResidualConnection` | **BUG** | Class at 0 indent (correct) but methods indented 12-space instead of 4-space |
+| 06 | `EncoderBlock` + `Encoder` | **BUG** | Classes at 0 indent (correct) but methods indented 8-space instead of 4-space |
+| 07 | `DecoderBlock` + `Decoder` | DONE | Indentation fixed; clean |
+| 08 | `ProjectionLayer` | DONE | Clean — no bugs |
+| 09 | `class Transformer` | DONE | Clean |
+| 10 | `build_transformer` | **MISSING** | Absent from model file; must be added from `-13` lines 570–628 |
 
-Note: `FeedForwardBlock` is not a standalone submission block but is required internally by `EncoderBlock` and `DecoderBlock`. Also needed: `Encoder` and `Decoder` stack classes (from `-09`/`-10`).
+Note: `FeedForwardBlock` is not a standalone submission block but is required internally by `EncoderBlock` and `DecoderBlock`.
+
+## Training Pipeline
+
+The training pipeline requires three additional files that **do not yet exist** and must be created from the lecture source files.
+
+### Files to Create
+
+| File | Source Lecture | Status |
+|------|---------------|--------|
+| `model_BeloAlmuete_JosephPaul.py` | Lectures 02–13 | Exists; bugs remain (see above) |
+| `dataset.py` | `CSCI_440-16_m+c_dataset_1.3.py` | **Not yet created** |
+| `config.py` | `CSCI_440-17-m+c_config_1.1.py` | **Not yet created** |
+| `train.py` | `CSCI_440-21-m+c_1.1.py` (best) | **Not yet created** |
+
+### Bugs to Fix When Creating `dataset.py`
+
+Source: `CSCI_440-16_m+c_dataset_1.3.py`
+
+| Line(s) | Issue | Fix |
+|---------|-------|-----|
+| 41–43 | `torch.Tensor([tokenizer_src.token_to_id(['[SOS]'])], dtype=...)` — wrong constructor, extra bracket wrapping the token | `torch.tensor([tokenizer_src.token_to_id('[SOS]')], dtype=torch.int64)` (lowercase `tensor`, remove extra list wrapping the string) |
+| 72 | `len(enc_input_tokens - 2)` — subtracts from the list, not from its length | `len(enc_input_tokens) - 2` |
+| 75 | `len(dec_input_tokens - 1)` — same issue | `len(dec_input_tokens) - 1` |
+| 97 | `[self.pad_token] * enc_num_padding_tokens` — `self.pad_token` is a tensor; multiplication fails | store pad as int: `self.pad_token = tokenizer_src.token_to_id('[PAD]')` (no `torch.tensor` wrapper), or call `.item()` at use site |
+
+### Bugs to Fix When Creating `config.py`
+
+Source: `CSCI_440-17-m+c_config_1.1.py`
+
+| Issue | Fix |
+|-------|-----|
+| `get_weights_file_path` references `config['model_basename']` but `get_config()` dict has key `'model_filename'` | Either rename dict key to `'model_basename'` or change the reference in `get_weights_file_path` to `config['model_filename']` — must be consistent |
+
+### Bugs to Fix When Creating `train.py`
+
+Best source: `CSCI_440-21-m+c_1.1.py`; supplement `get_all_sentences` from anywhere (fix indentation manually).
+
+| Location | Issue | Fix |
+|----------|-------|-----|
+| Import | `from tokenizers.trainers import WorldLevelTrainer` — class name wrong | `from tokenizers.trainers import WordLevelTrainer` |
+| `train_model` line ~18 | `print(f'Using device {device}'')` — extra closing quote causes SyntaxError | `print(f'Using device {device}')` |
+| `train_model` line ~22 | `loss_fn = ...` is inside the `if config['preload']:` block (wrong indentation) | Dedent `loss_fn` to be at the same level as the `if` block — it must be defined unconditionally |
+| preload block | `model.load_state_dict(state['model_state_dict'])` is missing | Add this line after `state = torch.load(model_filename)` |
+| `train_model` line ~24 | `print(f'Preloading model {model_filename}'')` — extra closing quote | `print(f'Preloading model {model_filename}')` |
+| `get_all_sentences` | Function is indented inside `run_validation` in all lecture files | Move to module level (0 indent) — it is a standalone generator |
+| `if __name__ == '__main__':` | Block is indented inside `train_model` function body | Move to module level (0 indent) |
+| `time.sleep(180)` (Lecture 19 version) | `time` module not imported | Remove the line or add `import time` at the top |
 
 ## Current Work
 
-Building `model.py` — a single file containing all 9 required blocks for the CSCI 440 assignment.
+Building the full training pipeline: `model_BeloAlmuete_JosephPaul.py` + `dataset.py` + `config.py` + `train.py`.
 
-### Progress (last updated: 2026-02-19)
+### Progress (last updated: 2026-04-28)
 
-- **`model.py`** exists as an untracked new file (not yet committed to git).
-- Blocks 01–05 are present in `model.py`, sourced from `CSCI_440-08-m+c_1.4.py`. All syntax bugs from that source file are still present — none have been fixed yet.
-- Block 05 (`ResidualConnection`) is nested at 8-space indent inside `MultiHeadAttentionBlock` in `model.py` — must be moved to module level.
-- Blocks 06–09 were stub comments only at session start; all four blocks were added to `model.py` this session (2026-02-19), copied verbatim from their best source files. No bugs were fixed during the copy — all source file issues are present in `model.py` as copied.
-  - Block 06 (`EncoderBlock` + `Encoder`) — from `-09`; still nested 8-space inside `MultiHeadAttentionBlock`
-  - Block 07 (`DecoderBlock` + `Decoder`) — from `-10`; `DecoderBlock` comment blocks at 0 indent (outside class body)
-  - Block 08 (`ProjectionLayer`) — from `-12`; clean, no bugs
-  - Block 09 (`class Transformer`) — from `-12`; clean; ends with truncated `build_transformer` comment — must be written from scratch
-- **`transformer.py`** (older combined file) — superseded by the assignment requirement to use `model.py`.
-- **`CSCI_440-12-m+c_1.0.py`** discovered (2026-02-19) — most complete lecture file to date. Contains all 9 blocks. `class Transformer` (Block 09) appears here for the first time and is architecturally complete with no syntax bugs. `build_transformer` factory function is absent (truncated comments only).
-- **`CSCI_440-10-m+c_1.1.py`** and **`CSCI_440-12-m+c_1.1.py`** discovered (2026-02-19) — minor revisions of their `-1.0` counterparts. Neither version fixes any bugs. `-10-1.1` adds only a `#todo` comment block. `-12-1.1` adds a `#I. Math` section with a LogSoftmax example and seaborn plot. `build_transformer` is still absent in `-12-1.1`. No change to best source recommendations for any block.
+- **`model_BeloAlmuete_JosephPaul.py`** exists. Blocks 01–04 and 07–09 are clean. Remaining bugs: `*` vs `@` in `attention` (line 245), missing `@staticmethod` (line 237), `ResidualConnection` method indentation (12-space → 4-space), `EncoderBlock`/`Encoder` method indentation (8-space → 4-space). `build_transformer` is absent and must be added from `CSCI_440-13-m+c_1.3.py` lines 570–628.
+- **`dataset.py`** — not yet created.
+- **`config.py`** — not yet created.
+- **`train.py`** — not yet created.
+- **`transformer.py`** (older combined file) — superseded; ignore.
+- Lecture files 13–23 discovered (2026-04-28): cover `build_transformer`, `dataset.py`, `config.py`, and `train.py` pipeline. All have syntax bugs documented above.
 
 ### Remaining Tasks
 
-1. Fix all syntax bugs in `model.py` Blocks 01–05 (full bug list in the anomaly table above; none fixed yet)
-2. Move `ResidualConnection` (Block 05) from 8-space indent inside MHA to module level (0 indent)
-3. Fix `FeedForwardBlock` — stray `?` character must become a `#` comment [Done?]
-4. Fix `EncoderBlock` + `Encoder` (Block 06) — move from 8-space inside MHA to module level (0 indent)
-5. Fix `DecoderBlock` (Block 07) — move comment blocks from 0 indent to correct 4-space indent inside class body [Done?]
-6. Write `build_transformer` factory function from scratch — absent from all lecture files; `class Transformer` (Block 09) is present and clean
-7. Run each block and capture output screenshots for the `.docx` submission
+#### Step 1 — Fix `model_BeloAlmuete_JosephPaul.py`
+
+1. Fix `attention` method: change `query * key.transpose(-2, -1)` → `query @ key.transpose(-2, -1)` (line ~245)
+2. Add `@staticmethod` decorator above `def attention(query, key, value, mask, dropout: nn.Dropout):` (line ~237)
+3. Fix `ResidualConnection` class body indentation: dedent all methods from 12-space to 4-space
+4. Fix `EncoderBlock` and `Encoder` class body indentation: dedent all methods from 8-space to 4-space
+5. Add `build_transformer` function from `CSCI_440-13-m+c_1.3.py` lines 570–628 (after `class Transformer`)
+
+#### Step 2 — Create `dataset.py`
+
+6. Create `dataset.py` from `CSCI_440-16_m+c_dataset_1.3.py`; fix all 4 bugs in the table above
+
+#### Step 3 — Create `config.py`
+
+7. Create `config.py` from `CSCI_440-17-m+c_config_1.1.py`; fix `model_basename` / `model_filename` key mismatch
+
+#### Step 4 — Create `train.py`
+
+8. Create `train.py` from `CSCI_440-21-m+c_1.1.py`; fix all 7 bugs in the table above
+
+#### Step 5 — Install dependencies
+
+9. `pip install torch datasets tokenizers tensorboard tqdm torchmetrics`
+
+#### Step 6 — Run and validate
+
+10. Run `python train.py` — expected behavior on first run: downloads opus_books en-it dataset, builds tokenizers, creates `weights/` folder, starts training epochs with tqdm progress bar showing loss, runs validation every epoch printing SOURCE / TARGET / PREDICTED translations
+11. Monitor loss in TensorBoard: `tensorboard --logdir runs/`
+12. Capture screenshots of each block's output for `.docx` submission
 
 ### Code Quality Assessment
 
@@ -152,11 +252,8 @@ Building `model.py` — a single file containing all 9 required blocks for the C
 - FeedForwardBlock matches the paper's FFN structure (two linear layers with ReLU and dropout)
 - MultiHeadAttentionBlock correctly implements scaled dot-product attention with head splitting/concatenation
 - ResidualConnection implements skip connections with pre-norm (differs slightly from paper but is common practice)
+- build_transformer: Xavier uniform initialization, correct N=6 layers, h=8 heads, d_ff=2048
 
-**Current State**:
-- `CSCI_440-08-m+c_1.4.py` has ~12 syntax errors preventing execution
-- Code was never tested/run (errors would have been caught immediately)
-- Once bugs are fixed, the modules would be production-quality implementations
-- The mathematical concepts and PyTorch patterns are correct
+**Training config defaults** (from `config.py`): batch_size=8, num_epochs=20, lr=1e-4, seq_len=350, d_model=512, en→it translation, opus_books dataset.
 
 **Environment**: Likely written in Jupyter Notebook or basic text editor with no linting/syntax checking enabled, during coursework.
