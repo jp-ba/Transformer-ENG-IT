@@ -38,7 +38,7 @@ from datasets import load_dataset
 from tokenizers import Tokenizer
 from tokenizers.models import WordLevel
 #the class that will train the tokenizer, create the vocabulary given the list of sentences
-from tokenizers.trainers import WorldLevelTrainer
+from tokenizers.trainers import WordLevelTrainer
 #split words by whitespace
 from tokenizers.pre_tokenizers import Whitespace
 
@@ -172,7 +172,7 @@ def run_validation(model, validation_ds, tokenizer_src, tokenizer_tgt, max_len, 
     #TorchMetrics CharErrorRate, BLEU (for translation tasks), WordErrorRate
 
 #Lecture: 23
-    def get_all_sentences(ds, lang):
+def get_all_sentences(ds, lang):
     for item in ds:
         #recall the dataset is made of pairs of sentences: src, tgt. extract 1 language
         #this extracts only 1 language from the pair we want
@@ -193,7 +193,7 @@ def get_or_build_tokenizer(config, ds, lang):
     if not Path.exists(tokenizer_path):
         tokenizer = Tokenizer(WordLevel(unk_token='[UNK]'))
         #pre_tokenizer: means we split word boundaries by Whitespace
-        tokenizer.pre_tokenizer = Whitespace
+        tokenizer.pre_tokenizer = Whitespace()
         #build a wordlevel trainer to train tokenizer. w/4 special tokens.
         #PAD is used to train the transformer
         #min_frequency: for a word to appear in our vocabulary, it must appear at minimum=2
@@ -247,23 +247,23 @@ def get_ds(config):
         #if max length is 500, then we can choose 510 to cover all possible sentences in the dataset
         #bc we also need to add SOS, EOS tokens to the sentences
         src_ids = tokenizer_src.encode(item['translation'][config['lang_src']]).ids
-        tgt_ids = tokenizer_src.encode(item['translation'][config['lang_tgt']]).ids
+        tgt_ids = tokenizer_tgt.encode(item['translation'][config['lang_tgt']]).ids
         #src max length is max length of src and same for tgt
         max_len_src = max(max_len_src, len(src_ids))
         max_len_tgt = max(max_len_tgt, len(tgt_ids))
 
-        print(f'Max length of source sentence: {max_len_src}')
-        print(f'Max length of target sentence: {max_len_tgt}')
+    print(f'Max length of source sentence: {max_len_src}')
+    print(f'Max length of target sentence: {max_len_tgt}')
 
         #create dataloader
         #define batch size acc to our config
-        train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
+    train_dataloader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True)
         #validation, use batch_size=1 to process each sentence 1 by one. This is where local 'short/long term memory is determined'
-        val_dataloader = DataLoader(val_ds, batch_size=1, shuffle=True)
+    val_dataloader = DataLoader(val_ds, batch_size=1, shuffle=True)
 
         #this method get_dataset, returns: dataloader of training, dataloader of validation, tokenizer of src language, tokenizer of tgt language
 
-        return train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt
+    return train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt
 
         #build the model, according to our config, src vocab size and tgt vocab size
 def get_model(config, vocab_src_len, vocab_tgt_len):
@@ -284,7 +284,7 @@ def train_model(config):
     #define which device to put all the tensors. Can be GPU cuda or CPU
     #check your computer for auto shut off, sleep, suspend battery settings
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f'Using device {device}'')
+    print(f'Using device {device}')
 
     #ensure the weights folder is created
     Path(config['model_folder']).mkdir(parents=True, exist_ok=True)
@@ -293,7 +293,7 @@ def train_model(config):
     train_dataloader, val_dataloader, tokenizer_src, tokenizer_tgt = get_ds(config)
     # to get vocab size, there's methods to get vocab size, and transfer the model to the GPU/CPU device
     #note: .get_vocab_size() does include special tokens [UNK], [PAD], [CLS] to the count 
-    model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size().to(device)
+    model = get_model(config, tokenizer_src.get_vocab_size(), tokenizer_tgt.get_vocab_size()).to(device)
 
     # start TensorBoard to visualize the loss graphics/charts
     #SummaryWriter()
@@ -312,8 +312,12 @@ def train_model(config):
     global_step = 0
     if config['preload']:
         model_filename = get_weights_file_path(config, config['preload'])
-        print(f'Preloading model {model_filename}'')
+        print(f'Preloading model {model_filename}')
         state = torch.load(model_filename)
+
+        #JP_2026_4_29 : added the loading of 'model_state_dict', it is seen later on that it is being saved... which means that at some point it
+        #               should be loaded back
+        model.load_state_dict(state['model_state_dict']) 
         initial_epoch = state['epoch'] + 1
         optimizer.load_state_dict(state['optimizer_state_dict'])
         global_step = state['global_step']
@@ -325,98 +329,98 @@ def train_model(config):
         #so with label smoothing, we take a little percentage of that probability and distribute it to the other tokens
         #so that the model becomes less sure of its choices, less overfitting, thus improving model accuracy
         #use label_smoothing=0.1, from every highest probability token, take 0.1% of score and give it to the others
-        loss_fn = nn.CrossEntropyLoss(ignore_index=tokenizer_src.token_to_id('[PAD]'), label_smoothing=0.1).to(device)
+    loss_fn = nn.CrossEntropyLoss(ignore_index=tokenizer_src.token_to_id('[PAD]'), label_smoothing=0.1).to(device)
 
-        #build the training loop
-        for epoch in range(initial_epoch, config['num_epochs']):
-        #tell the model to train
+    #build the training loop
+    for epoch in range(initial_epoch, config['num_epochs']):
+    #tell the model to train
 
-            #batch iterator: for data loader, tqdm, will show nice progress bar
-            #The string {epoch:02d} is a formatting placeholder to define filename patterns for saving model checkpoints.
-            batch_iterator = tqdm(train_dataloader, desc=f'Processing epoch {epoch:02d}')
-            for batch in batch_iterator:
-                model.train()
+        #batch iterator: for data loader, tqdm, will show nice progress bar
+        #The string {epoch:02d} is a formatting placeholder to define filename patterns for saving model checkpoints.
+        batch_iterator = tqdm(train_dataloader, desc=f'Processing epoch {epoch:02d}')
+        for batch in batch_iterator:
+            model.train()
 
-                #get the tensors for Encoder input
-                encoder_input = batch['encoder_input'].to(device) #size is (Batch, Seq_Len)
-                decoder_input = batch['decoder_input'].to(device) #size is (Batch, Seq_Len)
-                encoder_mask = batch['encoder_mask'].to(device) #size is (Batch, 1, 1, Seq_Len)
-                decoder_mask = batch['decoder_mask'].to(device) #size is (Batch, 1, Seq_Len, Seq_Len)
-                #why are these last 2 masks different: bc in encoder, we're asking to hide PAD tokens
-                #why are these last 2 masks different: bc in decoder, we're asking to hide all subsequent words
+            #get the tensors for Encoder input
+            encoder_input = batch['encoder_input'].to(device) #size is (Batch, Seq_Len)
+            decoder_input = batch['decoder_input'].to(device) #size is (Batch, Seq_Len)
+            encoder_mask = batch['encoder_mask'].to(device) #size is (Batch, 1, 1, Seq_Len)
+            decoder_mask = batch['decoder_mask'].to(device) #size is (Batch, 1, Seq_Len, Seq_Len)
+            #why are these last 2 masks different: bc in encoder, we're asking to hide PAD tokens
+            #why are these last 2 masks different: bc in decoder, we're asking to hide all subsequent words
 
-                #Run the tensors through the transformer
-                #calculate output of Encoder
-                encoder_output = model.encode(encoder_input, encoder_mask)
-                #output of model.encode is (Batch, Seq_Len, d_model)
-                decoder_output = model.decode(encoder_output, encoder_mask, decoder_input, decoder_mask)
-                #output of model.decode is (Batch, Seq_Len, d_model), the same as encoder
-                #need to map it back to the projection
-                proj_output = model.project(decoder_output) # (Batch, Seq_Len, tgt_vocab_size)
+            #Run the tensors through the transformer
+            #calculate output of Encoder
+            encoder_output = model.encode(encoder_input, encoder_mask)
+            #output of model.encode is (Batch, Seq_Len, d_model)
+            decoder_output = model.decode(encoder_output, encoder_mask, decoder_input, decoder_mask)
+            #output of model.decode is (Batch, Seq_Len, d_model), the same as encoder
+            #need to map it back to the projection
+            proj_output = model.project(decoder_output) # (Batch, Seq_Len, tgt_vocab_size)
 
-                #now that we have the output of the model, we want to compare it to our label
-                #extract label from the batch
+            #now that we have the output of the model, we want to compare it to our label
+            #extract label from the batch
 
-                label = batch['label'].to(device) # put it on our device, (Batch, Seq_Len)
-                #label is for each Batch and Seq_Len dimension, tells us what is the position in the vocabulary of that particular word
-                #we want proj_output (Batch, Seq_Len, tgt_vocab_size) to be comparable to label (Batch, Seq_Len)
+            label = batch['label'].to(device) # put it on our device, (Batch, Seq_Len)
+            #label is for each Batch and Seq_Len dimension, tells us what is the position in the vocabulary of that particular word
+            #we want proj_output (Batch, Seq_Len, tgt_vocab_size) to be comparable to label (Batch, Seq_Len)
 
-                #first compute loss
-                #this transforms the proj_output (Batch, Seq_Len, tgt_vocab_size) to --> (Batch * Seq_Len, tgt_vocab_size) to compare it with batch['label'].to(device)
-                #this is how the cross entropy wants the tensors to be (math requirement) and the label
-                loss = loss_fn(proj_output.view(-1, tokenizer_tgt.get_vocab_size()), label.view(-1))
+            #first compute loss
+            #this transforms the proj_output (Batch, Seq_Len, tgt_vocab_size) to --> (Batch * Seq_Len, tgt_vocab_size) to compare it with batch['label'].to(device)
+            #this is how the cross entropy wants the tensors to be (math requirement) and the label
+            loss = loss_fn(proj_output.view(-1, tokenizer_tgt.get_vocab_size()), label.view(-1))
 
-                #now that we've calculated the loss, we can update our progress bar with the loss we calculated
-                batch_iterator.set_postfix({f"loss": f"{loss.item():6.3f}"})
+            #now that we've calculated the loss, we can update our progress bar with the loss we calculated
+            batch_iterator.set_postfix({f"loss": f"{loss.item():6.3f}"})
 
-                #log the loss on tensorboard
-                writer.add_scalar('train loss', loss.item(), global_step)
-                writer.flush()
+            #log the loss on tensorboard
+            writer.add_scalar('train loss', loss.item(), global_step)
+            writer.flush()
 
-                #backpropagate the loss
-                loss.backward()
+            #backpropagate the loss
+            loss.backward()
 
-                #update the weights of the model
-                optimizer.step()
-                optimizer.zero_grad()
+            #update the weights of the model
+            optimizer.step()
+            optimizer.zero_grad()
 
-                #move the global step by 1
-                #the global step is being used by tensor board to keep track of the loss
-                global_step += 1
+            #move the global step by 1
+            #the global step is being used by tensor board to keep track of the loss
+            global_step += 1
 
-                #save the model at the end of every epoch
-                #it's good to resume the training to save the state of the model and the state of the optimizer
-                #bc the optimizer also keeps track of some statistics, 1 for each weight, to undersand how to move each weight independently
-                #the optimizer dictionary is quite big, so if you want training to be resumable, you need to save it
-                #otherwise the optimizer will start from zero and have to figure out from zero even if you start from a previous epoch how to move each weight
+            #save the model at the end of every epoch
+            #it's good to resume the training to save the state of the model and the state of the optimizer
+            #bc the optimizer also keeps track of some statistics, 1 for each weight, to undersand how to move each weight independently
+            #the optimizer dictionary is quite big, so if you want training to be resumable, you need to save it
+            #otherwise the optimizer will start from zero and have to figure out from zero even if you start from a previous epoch how to move each weight
 
-            #best practice: run validation after epoch, give it all the params needed to run the validation
-            #lambda for printing messages via tqdm
-            run_validation(model, val_dataloader, tokenizer_src, tokenizer_tgt, config['seq_len'], device, lambda msg: batch_iterator.write(msg), global_step, writer)
-            #for PREDICTED: it will just output a bunch of commas during validation bc it's not training it at all
-            #if we were training it, we would see PREDICTED values after a few epochs, and improve
+        #best practice: run validation after epoch, give it all the params needed to run the validation
+        #lambda for printing messages via tqdm
+        run_validation(model, val_dataloader, tokenizer_src, tokenizer_tgt, config['seq_len'], device, lambda msg: batch_iterator.write(msg), global_step, writer)
+        #for PREDICTED: it will just output a bunch of commas during validation bc it's not training it at all
+        #if we were training it, we would see PREDICTED values after a few epochs, and improve
 
 
 
-                model_filename = get_weights_file_path(config, f'{epoch:02d}')
-                torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'global_step': global_step
-                }, model_filename
+        model_filename = get_weights_file_path(config, f'{epoch:02d}')
+        torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'global_step': global_step
+            }, model_filename)
 
-    #build code to run this
-    if __name__ == '__main__':
-        warnings.filterwarnings('ignore')
-        config = get_config()
-        train_model(config)
+#build code to run this
+if __name__ == '__main__':
+    warnings.filterwarnings('ignore')
+    config = get_config()
+    train_model(config)
 
-    #if this works, we expect this code should:
-    #download the dataset
-    #create the tokenizer, save it into its file
-    #start training the model for 01 epoch (ideal, not necessary for final)
-    #start training the model for 25-30 epochs (ideal, can run after class)
+#if this works, we expect this code should:
+#download the dataset
+#create the tokenizer, save it into its file
+#start training the model for 01 epoch (ideal, not necessary for final)
+#start training the model for 25-30 epochs (ideal, can run after class)
 
 #2:20:42 Validation: want to visualize the output of the model while training
 #want to see how the model evolves during training

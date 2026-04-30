@@ -18,7 +18,7 @@ def get_config():
         "lang_src": "en",               #language source: english
         "lang_tgt": "it",               #language target: italian
         "model_folder": "weights",      #where we save the weights
-        "model_filename": "tmodel_",    #transformer
+        "model_basename": "tmodel_",    #transformer
         "preload": None,                #preload the model in case we want to restart training after it crashes
         "tokenizer_file": "tokenizer_{0}.json",  #the tokenizer file, "en" if english, or "it" if italian
         "experiment_name": "runs/tmodel"                       #experiment name for tensor board to save the losses while training

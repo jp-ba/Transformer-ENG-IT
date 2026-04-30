@@ -38,9 +38,9 @@ class BilingualDataset(Dataset):
         #the datatype for SOS is int64, why? bc vocabulary lengths can be > 32 bit long
         #repeat for end-of-sentence and padding tokens
         #https://huggingface.co/docs/tokenizers/python/latest/api/reference.html
-        self.sos_token = torch.Tensor([tokenizer_src.token_to_id(['[SOS]'])], dtype=torch.int64)
-        self.eos_token = torch.Tensor([tokenizer_src.token_to_id(['[EOS]'])], dtype=torch.int64)
-        self.pad_token = torch.Tensor([tokenizer_src.token_to_id(['[PAD]'])], dtype=torch.int64)
+        self.sos_token = torch.Tensor([tokenizer_src.token_to_id('[SOS]')], dtype=torch.int64)
+        self.eos_token = torch.Tensor([tokenizer_src.token_to_id('[EOS]')], dtype=torch.int64)
+        self.pad_token = torch.Tensor([tokenizer_src.token_to_id('[PAD]')], dtype=torch.int64)
 
     #define length method of this dataset, which tells length of the dataset (e.g. huggingface) itself
     def __len__(self):
@@ -69,10 +69,10 @@ class BilingualDataset(Dataset):
         #why -2, bc we have this # of tokens: enc_input_tokens
         #we need to reach this # of tokens: seq_len
         #and we'll add [SOS] and [EOS] tokens, which need to be subtracted out
-        enc_num_padding_tokens = self.seq_len - len(enc_input_tokens - 2)
+        enc_num_padding_tokens = self.seq_len - len(enc_input_tokens) - 2
         #for decoder side, we only subtract -1 bc in training we only add SOS token to the Decoder side
         #and then in the label we only add the EOS token, so we only need to subtract -1 to the Decoder side
-        dec_num_padding_tokens = self.seq_len - len(dec_input_tokens - 1)
+        dec_num_padding_tokens = self.seq_len - len(dec_input_tokens) - 1
 
         #ensure the seq len we chose is enough to represent ALL the sentences in our dataset
         #if we choose a seq len too small, we want to raise an exception
